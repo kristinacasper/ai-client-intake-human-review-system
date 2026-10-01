@@ -52,6 +52,10 @@ The system:
 
 No email is sent during this stage.
 
+![V2 intake workflow](docs/screenshots/01-v2-intake-workflow.jpg)
+
+*V2 intake scenario: webhook intake, immediate data capture, AI extraction, JSON parsing, and human-review preparation.*
+
 ### Stage 2 — Human-Approved Email Sending
 
 `Google Sheets → Approval Filter → Gmail → Status Update`
@@ -66,6 +70,10 @@ A reply can only be sent when:
 After successful sending, the system sets `response_status = sent` and records the sending timestamp.
 
 If Gmail sending fails, the system sets `response_status = send_failed` and records the failure for manual review.
+
+![V3 approved send workflow](docs/screenshots/02-v3-approved-send-workflow.jpg)
+
+*V3 outbound scenario: approved rows are sent through Gmail, successful sends are logged, and failures follow a dedicated error-handling path.*
 
 ---
 
@@ -207,24 +215,23 @@ The successful test confirmed the complete process:
 
 This verified that the human approval gate, Gmail integration, and status tracking work together correctly.
 
+![Approved and sent test row](docs/screenshots/03-approved-sent-sheet.jpg)
+
+*Controlled test evidence showing the AI draft, manual `approved` state, successful send timestamp, and no send error.*
+
 ---
 
 ## Visual Evidence
 
-Repository screenshots are stored in [`docs/screenshots/`](docs/screenshots/).
+The repository includes three sanitized portfolio screenshots:
 
-Planned evidence includes:
+1. **V2 intake workflow** — captures the complete AI-assisted intake and review-preparation flow.
+2. **V3 approved-send workflow** — demonstrates the human approval gate, Gmail action, success path, and failure handler.
+3. **Approved → sent audit evidence** — shows the reviewed draft, manual approval state, and recorded send timestamp.
 
-- V2 intake scenario overview,
-- V3 human-approved outbound scenario,
-- approval filter conditions,
-- Google Sheets CRM review state,
-- successful `sent` test row,
-- optional received test email proof.
+All evidence is stored in [`docs/screenshots/`](docs/screenshots/). A capture and privacy checklist is available in [`docs/screenshots/README.md`](docs/screenshots/README.md).
 
-A screenshot capture and privacy checklist is available in [`docs/screenshots/README.md`](docs/screenshots/README.md).
-
-> Screenshots must never expose webhook URLs, access tokens, API keys, OAuth details, private customer data, connection identifiers, or other credentials.
+> Public portfolio evidence is sanitized to avoid exposing webhook URLs, access tokens, API keys, OAuth details, private customer data, connection identifiers, or other credentials.
 
 ---
 
