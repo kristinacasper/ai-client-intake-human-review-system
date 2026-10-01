@@ -37,10 +37,6 @@ I designed a two-stage Make.com workflow.
 
 ### Stage 1 — AI Client Intake
 
-The first scenario processes incoming enquiry data.
-
-Workflow:
-
 `Webhook → Google Sheets → AI Analysis → JSON Parsing → Google Sheets Update`
 
 The system:
@@ -56,39 +52,49 @@ The system:
 
 No email is sent during this stage.
 
----
-
-## Stage 2 — Human-Approved Email Sending
-
-The second scenario handles outbound communication.
-
-Workflow:
+### Stage 2 — Human-Approved Email Sending
 
 `Google Sheets → Approval Filter → Gmail → Status Update`
 
 A reply can only be sent when:
 
-`approval_status = approved`
+- `approval_status = approved`
+- `response_status = not_sent`
+- an email address is present,
+- an AI-generated draft is present.
 
-and
+After successful sending, the system sets `response_status = sent` and records the sending timestamp.
 
-`response_status = not_sent`
+If Gmail sending fails, the system sets `response_status = send_failed` and records the failure for manual review.
 
-The system also checks that an email address and AI-generated draft are present.
+---
 
-After successful sending:
+## Architecture
 
-`response_status = sent`
+```mermaid
+flowchart TD
+    A[Client Enquiry] --> B[Webhook]
+    B --> C[Save Raw Enquiry to Google Sheets]
+    C --> D[AI Extraction + Draft Generation]
+    D --> E[Parse Structured JSON]
+    E --> F[Update CRM Row]
+    F --> G[Human Review: pending_review]
+    G --> H{Human approves?}
+    H -- No --> G
+    H -- Yes --> I[approval_status = approved]
+    I --> J[Search approved + not_sent rows]
+    J --> K{Email + Draft Present?}
+    K -- No --> L[Do Not Send]
+    K -- Yes --> M[Send Gmail]
+    M --> N{Send successful?}
+    N -- Yes --> O[response_status = sent]
+    O --> P[Record sent_at_utc]
+    N -- No --> Q[response_status = send_failed]
+    Q --> R[Record send_error]
+    R --> S[Manual Review Required]
+```
 
-and a sending timestamp is recorded.
-
-If Gmail sending fails:
-
-`response_status = send_failed`
-
-and the failure is recorded for manual review.
-
-This prevents automatic repeated sending after an error.
+This architecture deliberately separates AI preparation from outbound execution so that no customer-facing email can be sent without explicit human approval.
 
 ---
 
@@ -144,9 +150,7 @@ The AI returns structured JSON containing fields such as:
 - review reason,
 - and AI reply draft.
 
-This structured output is parsed before being written into the CRM spreadsheet.
-
-The workflow therefore uses AI as a structured processing component rather than relying only on free-form text generation.
+This output is parsed before being written into the CRM spreadsheet, using AI as a structured processing component rather than only a free-form text generator.
 
 ---
 
@@ -205,9 +209,26 @@ This verified that the human approval gate, Gmail integration, and status tracki
 
 ---
 
-## Technology
+## Visual Evidence
 
-The project uses:
+Repository screenshots are stored in [`docs/screenshots/`](docs/screenshots/).
+
+Planned evidence includes:
+
+- V2 intake scenario overview,
+- V3 human-approved outbound scenario,
+- approval filter conditions,
+- Google Sheets CRM review state,
+- successful `sent` test row,
+- optional received test email proof.
+
+A screenshot capture and privacy checklist is available in [`docs/screenshots/README.md`](docs/screenshots/README.md).
+
+> Screenshots must never expose webhook URLs, access tokens, API keys, OAuth details, private customer data, connection identifiers, or other credentials.
+
+---
+
+## Technology
 
 - Make.com
 - Google Sheets
@@ -242,69 +263,13 @@ This project demonstrates practical experience with:
 
 ---
 
-## Architecture
-
-### Intake workflow
-
-`Client Enquiry`
-
-↓
-
-`Webhook`
-
-↓
-
-`Save Raw Enquiry to Google Sheets`
-
-↓
-
-`AI Extraction + Draft Generation`
-
-↓
-
-`Parse Structured JSON`
-
-↓
-
-`Update CRM Row`
-
-↓
-
-`Human Review Required`
-
-### Outbound workflow
-
-`Human changes approval_status to approved`
-
-↓
-
-`Search approved + not_sent records`
-
-↓
-
-`Validate email + AI draft`
-
-↓
-
-`Send Gmail`
-
-↓
-
-**Success:** `sent + timestamp`
-
-or
-
-**Failure:** `send_failed + error log`
-
----
-
 ## Project Status
 
 **Portfolio prototype completed.**
 
 The automation was successfully tested end-to-end.
 
-The scenarios are intentionally kept inactive outside demonstrations because this project was built as a portfolio prototype rather than a production client system.
+The Make.com scenarios are intentionally kept inactive outside demonstrations because this project was built as a portfolio prototype rather than a production client system.
 
 ---
 
